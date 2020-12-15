@@ -25,7 +25,6 @@
  */
 #import "LaunchReview.h"
 #import "StoreKit/StoreKit.h"
-#import "UIWindow+DismissNotification.h"
 
 #define REQUEST_TIMEOUT 60.0
 
@@ -34,14 +33,6 @@
 - (void)pluginInitialize {
     [super pluginInitialize];
     
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowDidBecomeVisibleNotification:)
-                                                 name:UIWindowDidBecomeVisibleNotification
-                                               object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self
-                                             selector:@selector(windowDidBecomeHiddenNotification:)
-                                                 name:UIWindowDidBecomeHiddenNotification
-                                            object:nil];
     self.appStoreId = nil;
     self.launchRequestCallbackId = nil;
     self.ratingRequestCallbackId = nil;
@@ -96,41 +87,6 @@
 {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:errorMsg];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:callbackId];
-}
-
-
-- (void)windowDidBecomeVisibleNotification:(NSNotification *)notification
-{
-    @try {
-        NSString* notificationClassName = NSStringFromClass([notification.object class]);
-        if([notification.object class] == [MonitorObject class]
-           || [notificationClassName isEqualToString:@"SKStoreReviewPresentationWindow"]
-        ){
-            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"shown"];
-            [pluginResult setKeepCallback:[NSNumber numberWithBool:YES]];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.ratingRequestCallbackId];
-        }
-    }
-    @catch (NSException *exception) {
-        [self handlePluginException:exception :self.ratingRequestCallbackId];
-    }
-}
-
-- (void)windowDidBecomeHiddenNotification:(NSNotification *)notification
-{
-    @try {
-        NSString* notificationClassName = NSStringFromClass([notification.object class]);
-        if([notification.object class] == [MonitorObject class]
-           || [notificationClassName isEqualToString:@"SKStoreReviewPresentationWindow"]
-        ){
-            CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"dismissed"];
-            [pluginResult setKeepCallback:[NSNumber numberWithBool:NO]];
-            [self.commandDelegate sendPluginResult:pluginResult callbackId:self.ratingRequestCallbackId];
-        }
-    }
-    @catch (NSException *exception) {
-        [self handlePluginException:exception :self.ratingRequestCallbackId];
-    }
 }
 
 - (BOOL) isNull:(NSString*) string
